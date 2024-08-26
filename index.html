@@ -43,10 +43,13 @@
           <br>The colour of the circle does not matter. 
           <br>You simply have to press the letter B on the keyboard as fast as you can when you see a circle appear.</p>
         <p>Remember, press B as fast as you can when a circle appear, regardless of the colour.</p>
-        <div style='float: left;'><img src='image/blue.png'></img></div>
-        <div style='float: right;'><img src='image/orange.png'></img>
+        <div style='display: flex; justify-content: space-between;'>
+          <div><img src='image/blue.png'></div>
+          <div><img src='image/orange.png'></div>
+        </div>
       `,
       choices: ['Begin first part of experiment'],
+      button_html: '<button class="jspsych-btn" style="margin-top: 20px;">%choice%</button>',
       post_trial_gap: 1500
     };
     timeline.push(instructions1);
