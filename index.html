@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My experiment</title>
+    <script src="jspsych/jspsych.js"></script>
+    <script src="jspsych/jspsychsheet.js"></script>
+    <script src="jspsych/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych/plugin-html-button-response.js"></script>
+    <script src="jspsych/plugin-preload.js"></script>
+    <script src="jspsych/plugin-image-keyboard-response.js"></script>
+    <link href="jspsych/jspsych.css" rel="stylesheet" type="text/css" />
+    <link href="jspsych/jspsychsheet.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body></body>
+  <script>
+
+    var jsPsych = initJsPsych({
+      on_finish: function () {
+        jsPsych.data.displayData();
+      }
+    });
+
+    var timeline = [];
+
+    var preload = {
+      type: jsPsychPreload,
+      images: ['image/blue.png', 'image/orange.png']
+    };
+    timeline.push(preload);
+
+    var welcome = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: "Welcome to the experiment.",
+      choices: ['Continue to instructions']
+    };
+    timeline.push(welcome);
+
+    var instructions1 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <p>In the first part of this experiment, a circle will appear in the center 
+        of the screen.</p><p>The circle could be blue or orange. 
+          <br>The colour of the circle does not matter. 
+          <br>You simply have to press the letter B on the keyboard as fast as you can when you see a circle appear.</p>
+        <p>Remember, press B as fast as you can when a circle appear, regardless of the colour.</p>
+        <div style='float: left;'><img src='image/blue.png'></img></div>
+        <div style='float: right;'><img src='image/orange.png'></img>
+      `,
+      choices: ['Begin first part of experiment'],
+      post_trial_gap: 1500
+    };
+    timeline.push(instructions1);
+
+    var test_stimuli1 = [
+      { stimulus: "image/blue.png", correct_response: 'b' },
+      { stimulus: "image/orange.png", correct_response: 'b' }
+    ];
+
+    var fixation1 = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: '<div style="font-size:60px;">+</div>',
+      choices: "NO_KEYS",
+      trial_duration: function () {
+        return jsPsych.randomization.sampleWithoutReplacement([250, 500, 750, 1000, 1250, 1500, 1750, 2000], 1)[0];
+      },
+      data: {
+        task: 'fixation'
+      }
+    };
+
+    var test1 = {
+      type: jsPsychImageKeyboardResponse,
+      stimulus: jsPsych.timelineVariable('stimulus'),
+      choices: ['b'],
+      data: {
+        task: 'response1',
+        correct_response: jsPsych.timelineVariable('correct_response')
+      },
+      on_finish: function (data) {
+        data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+      }
+    };
+
+    var test_procedure1 = {
+      timeline: [fixation1, test1],
+      timeline_variables: test_stimuli1,
+      repetitions: 5,
+      randomize_order: true
+    };
+    timeline.push(test_procedure1);
+
+    var instructions2 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <p>You've completed the first part of the experiment!</p>
+        <p>In the second part of this experiment, a circle will again appear in the center 
+        of the screen.</p><p>This time, if the circle is <strong>blue</strong>, 
+        press the letter A on the keyboard as fast as you can.</p>
+        <p>If the circle is <strong>orange</strong>, press the letter L 
+        as fast as you can.</p>
+        <div style='width: 700px;'>
+        <div style='float: left;'><img src='image/blue.png'></img>
+        <p class='small'><strong>Press the A key</strong></p></div>
+        <div style='float: right;'><img src='image/orange.png'></img>
+        <p class='small'><strong>Press the L key</strong></p></div>
+        </div>
+      `,
+      choices: ['Begin second part of experiment'],
+      post_trial_gap: 1500
+    };
+    timeline.push(instructions2);
+
+    var test_stimuli = [
+      { stimulus: "image/blue.png", correct_response: 'a' },
+      { stimulus: "image/orange.png", correct_response: 'l' }
+    ];
+
+    var fixation = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: '<div style="font-size:60px;">+</div>',
+      choices: "NO_KEYS",
+      trial_duration: function () {
+        return jsPsych.randomization.sampleWithoutReplacement([250, 500, 750, 1000, 1250, 1500, 1750, 2000], 1)[0];
+      },
+      data: {
+        task: 'fixation'
+      }
+    };
+
+    var test = {
+      type: jsPsychImageKeyboardResponse,
+      stimulus: jsPsych.timelineVariable('stimulus'),
+      choices: ['a', 'l'],
+      data: {
+        task: 'response2',
+        correct_response: jsPsych.timelineVariable('correct_response')
+      },
+      on_finish: function (data) {
+        data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+      }
+    };
+
+    var test_procedure = {
+      timeline: [fixation, test],
+      timeline_variables: test_stimuli,
+      repetitions: 5,
+      randomize_order: true
+    };
+    timeline.push(test_procedure);
+
+    var debrief_block = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: function () {
+        var trials1 = jsPsych.data.get().filter({ task: 'response1' });
+        var trials2 = jsPsych.data.get().filter({ task: 'response2' });
+        var correct_trials1 = trials1.filter({ correct: true });
+        var correct_trials2 = trials2.filter({ correct: true });
+        var accuracy = Math.round((correct_trials1.count() +correct_trials2.count()) / (trials1.count() + trials2.count()) * 100);
+        var rt = Math.round(correct_trials1.select('rt').mean());
+        var dt = Math.round((correct_trials2.select('rt').mean()) - (correct_trials1.select('rt').mean()));
+        return `<p>You responded correctly on ${accuracy}% of the trials.</p>
+        <p>Your average reaction time was ${rt}ms.</p>
+        <p>Your average decision-making time was ${dt}ms.</p>
+        <p>Press any key to complete the experiment. Thank you!</p>`;
+      }
+    };
+    timeline.push(debrief_block);
+
+    jsPsych.run(timeline);
+
+  </script>
+</html>
